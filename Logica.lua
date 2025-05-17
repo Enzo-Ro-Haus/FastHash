@@ -1,21 +1,43 @@
 -- Logic.lua - Módulo experto en Lua 5.4 para hasheo y gestión de archivos
 package.path = package.path .. ";./lua_modules/?.lua"
 local sha = require("sha2")
+local lfs = require("lfs")
 
 -- Tabla que agrupa todas las funciones de lógica
 local Logica = {}
 
--- Abre un archivo en modo binario y devuelve el handle
-function Logica:abrir_archivo(ruta)
-    local archivo, err = io.open(ruta, "rb")
-    assert(archivo, "No se puede leer el archivo: " .. tostring(err))
-    return archivo
+-- Función interna: procesa un archivo abierto en modo binario
+local function process_file(archivo, hasher2, hasher3, hasherMD5, hasher4)
+    for chunk in function() return archivo:read(4096) end do
+        hasher2(chunk)
+        hasher3(chunk)
+        hasherMD5(chunk)
+        hasher4(chunk)
+    end
+    archivo:close()
 end
 
--- Obtiene el nombre base (sin extensión) de una ruta
+-- Recorre recursivamente un directorio y alimenta los hashers
+local function process_directory(path, hasher2, hasher3, hasherMD5, hasher4)
+    for entry in lfs.dir(path) do
+        if entry ~= "." and entry ~= ".." then
+            local full = path .. "/" .. entry
+            local attr = lfs.attributes(full)
+            if attr and attr.mode == "file" then
+                local f = io.open(full, "rb")
+                assert(f, "No se puede leer el archivo: " .. full)
+                process_file(f, hasher2, hasher3, hasherMD5, hasher4)
+            elseif attr and attr.mode == "directory" then
+                process_directory(full, hasher2, hasher3, hasherMD5, hasher4)
+            end
+        end
+    end
+end
+
+-- Obtiene el nombre base (sin extensión) de una ruta (solo último componente)
 function Logica:obtener_nombre(ruta)
-    local nombre = ruta:match("([^/\\]+)%%.%\w+$") or "archivo_desconocido"
-    return nombre
+    local nombre = ruta:match("([^/\\]+)$") or "entrada_desconocida"
+    return nombre:gsub("%.%w+$", "")
 end
 
 -- Genera el nombre de salida con timestamp
@@ -50,47 +72,58 @@ function Logica:crear_archivo(dir, nombre)
     return f, fullpath
 end
 
--- Escribe los resultados de hash en el archivo y cierra el handle
-function Logica:editar_archivo(handle, nombre_original, digests, output_path)
-    handle:write("Archivo original: ", nombre_original, "\n")
-    handle:write("MD5: ",        digests.md5,  "\n")
-    handle:write("SHA2-256: ",   digests.sha2, "\n")
-    handle:write("SHA3-256: ",   digests.sha3)
-    handle:close()
-    print("Archivo de resumen creado en: " .. output_path)
-end
-
 -- Función principal: orquesta el proceso completo de hasheo y guardado
 function Logica:hashear_archivo(ruta)
-    -- Abrir y procesar el archivo
-    local archivo = self:abrir_archivo(ruta)
-    local nombre_base = self:obtener_nombre(ruta)
-
-    local hasher2  = sha.sha256()
-    local hasher3  = sha.sha3_256()
+    -- Inicializar los hashers
+    local hasher2   = sha.sha256()
+    local hasher3   = sha.sha3_256()
     local hasherMD5 = sha.md5()
-    for chunk in function() return archivo:read(4096) end do
-        hasher2(chunk)
-        hasher3(chunk)
-        hasherMD5(chunk)
+    local blake3 = sha.blake3()
+
+    -- Procesar según tipo de entrada
+    local attr = lfs.attributes(ruta)
+    if not attr then
+        error("Ruta no encontrada: " .. ruta)
     end
-    archivo:close()
+    if attr.mode == "file" then
+        local archivo = io.open(ruta, "rb")
+        assert(archivo, "No se puede leer el archivo: " .. ruta)
+        process_file(archivo, hasher2, hasher3, hasherMD5, blake3)
+    elseif attr.mode == "directory" then
+        process_directory(ruta, hasher2, hasher3, hasherMD5, blake3)
+    else
+        error("Tipo no soportado: " .. ruta)
+    end
 
     -- Obtener los valores hexadecimales
     local digests = {
         md5  = hasherMD5(),
         sha2 = hasher2(),
-        sha3 = hasher3()
+        sha3 = hasher3(),
+        bla3 = blake3()
     }
 
-    -- Generar nombre de salida y abrir archivo de resultados
+    -- Preparar archivo de salida
+    local nombre_base = self:obtener_nombre(ruta)
     local nombre_output = self:nombre_nuevo(nombre_base)
     local escritorio     = self:ruta_escritorio()
     local handle, fullpath = self:crear_archivo(escritorio, nombre_output)
 
-    -- Escribir y cerrar
-    self:editar_archivo(handle, nombre_base, digests, fullpath)
+    -- Escribir resultados
+    handle:write("Ruta: ", ruta, "\n")
+    handle:write("MD5: ",        digests.md5,  "\n")
+    handle:write("SHA2-256: ",   digests.sha2, "\n")
+    handle:write("SHA3-256: ",   digests.sha3, "\n")
+    handle:write("Blake3: ",   digests.bla3, "\n")
+    handle:close()
+
+    -- Retornar resumen
+    return string.format(
+        "Ruta original: %s\n\nMD5:\n%s\n\nSHA2-256:\n%s\n\nSHA3-256:\n%s\n\nBlake3:\n%s",
+        ruta, digests.md5, digests.sha2, digests.sha3, digests.bla3
+    )
 end
 
 return Logica
+
 

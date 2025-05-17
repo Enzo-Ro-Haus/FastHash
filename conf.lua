@@ -6,6 +6,7 @@ function love.conf(t) -- variable que pasamos nosotros
  --t.indentity = donde se guardan los archivos de guardad
  t.window.title = "Hasheito"
  t.window.width = 700
- t.window.height = 400
+ t.window.height = 320
  t.window.resizable = false
+ t.window.borderless = false
 end
