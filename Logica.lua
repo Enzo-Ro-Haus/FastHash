@@ -1,5 +1,6 @@
 -- Logic.lua - Módulo experto en Lua 5.4 para hasheo y gestión de archivos
-package.path = package.path .. ";./lua_modules/?.lua"
+package.path = package.path .. ";./?.lua;./suit/?.lua;/usr/share/lua/5.1/?.lua"
+package.cpath = package.cpath .. ";./?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so"
 local sha = require("sha2")
 local lfs = require("lfs")
 
