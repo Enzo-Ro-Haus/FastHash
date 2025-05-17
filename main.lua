@@ -2,8 +2,8 @@ local love = require "love"
 local suit = require "suit"
 local logica = require("./Logica")
 
-local defaultPrompt = "--- ARRASTRE AQUI EL ARCHIVO/CARPETA QUE DESEE HASHEAR AUTOMATICAMENTE ---\n\nAviso: Los hash se mostrarán en pantalla y en un archivo txt en su Escritorio\n\nBotones:\n\n\t- Copiar: Copia los mensajes en el portapapeles.\n\n\t- Borrar: Borra los mensajes en pantalla.\n\n\t- Salir: Cierra el programa.\n\n\nHaseito by Enzo Rosso Hausberger"
-local missingPrompt = "Debe ingresar un archivo o directorio"
+local defaultPrompt = "--- ARRASTRE AQUI EL ARCHIVO/CARPETA QUE DESEE HASHEAR AUTOMATICAMENTE ---\n\nAviso: Los hash se mostrarán en pantalla y en un archivo txt en su Escritorio\n\nBotones:\n\n\t- Copiar: Copia los mensajes en el portapapeles.\n\n\t- Borrar: Borra los mensajes en pantalla.\n\n\t- Salir: Cierra el programa.\n\n\nHasheito by Enzo Rosso Hausberger"
+local missingPrompt = "--- DEBE INGRESAR UN ARCHIVO O DIRECTORIO ---"
 
 local dropZone = {
     x = 20, y = 20, w = 660, h = 250,
@@ -64,7 +64,7 @@ function love.update(dt) -- dt data time tiempo de un frame, entre este y el ant
   if btn2.hit then
     if dropZone.text ~= defaultPrompt and dropZone.text ~= missingPrompt then
       love.system.setClipboardText(dropZone.text)
-       dropZone.text = "Texto copiado al portapapeles"
+       dropZone.text = "--- COPIADO AL PORTAPAPELES ---"
     else
       dropZone.text = missingPrompt
     end
