@@ -39,10 +39,15 @@ Hasheito es un generador de codigos hash md5, sha2, sha3, blank3 para archivos y
 
 * **Con love:**
     1. Una vez descargado el archivo .love abra la terminal.
-    2. Instale el repositorio de love en su sistema. `sudo add-apt-repository ppa:bartbes/love-stable`
-    3. Instale love `sudo apt install love`
-    4. En la carpeta en la que se encuentr el archivo .love abra la terminal.
-    5. Ejecute `love Hasheito.love` si todo salió bien verá la ventana de inico.
+    2. Descargue Love2D en su OS:
+* **En Ubunto:** 
+1. Instale el repositorio de love en su sistema. `sudo add-apt-repository ppa:bartbes/love-stable`
+    2. Instale love `sudo apt install love`
+    3. En la carpeta en la que se encuentr el archivo .love abra la terminal.
+    4.  si todo salió bien verá la ventana de inico.
+* **Otros sistemas operativos:**
+1. Descarge e instale Love2D desde su web oficial [love2d.org](https://love2d.org)
+2. Ejecute el archivo .love en caso de que no funciones abra la terminal en el directorios donde se encuentra Hasheito.love y ejecute el comando `love Hasheito.love`
 
 
 4. **Desintalación**
